@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cap Assignment</title>
+</head>
+<body>
+    <h1>Cap Assignment</h1>
+    <p>Game ID: {{ game_id }}</p>
+    <p>Date: {{ game_date }}</p>
+    <p>Match: Valley United Water Polo Club vs. {{ opponent_team }}</p>
+    <form method="POST">
+        <ul>
+            {% for player in players %}
+            <li>
+                {{ player[1] }} {{ player[2] }}
+                <select name="{{ player[0] }}">
+                    {% for cap in available_caps %}
+                    <option value="{{ cap[0] }}">{{ cap[0] }}</option>
+                    {% endfor %}
+                </select>
+            </li>
+            {% endfor %}
+        </ul>
+        <button type="submit">Submit Cap Assignments</button>
+    </form>
+    <br>
+    <button onclick="location.href='{{ url_for('index') }}'">Back to Home</button>
+</body>
+</html>
