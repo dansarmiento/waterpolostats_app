@@ -50,7 +50,7 @@ def games():
         date = request.form['date']
         opponent_team = request.form['opponent_team']
         opponent_team_level = request.form['opponent_team_level']
-        cursor.execute("INSERT INTO games (date, my_team_id, opponent_team, opponent_team_level) VALUES (?, ?, ?, ?)",
+        cursor.execute("INSERT INTO games (game_date, my_team_id, opponent_team, opponent_team_level) VALUES (?, ?, ?, ?)",
                        (date, 239, opponent_team, opponent_team_level))
         db.commit()
         game_id = cursor.lastrowid
@@ -63,7 +63,7 @@ def cap_assignment(game_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT date, opponent_team FROM games WHERE game_id = ?", (game_id,))
+    cursor.execute("SELECT game_date, opponent_team FROM games WHERE game_id = ?", (game_id,))
     game = cursor.fetchone()
     game_date, opponent_team = game
 
@@ -78,18 +78,24 @@ def cap_assignment(game_id):
     cursor.execute("SELECT player_id, first_name, last_name FROM players WHERE club_team_id = 239")
     players = cursor.fetchall()
 
-    cursor.execute("SELECT cap_id FROM caps WHERE cap_id NOT IN (SELECT cap_id FROM cap_assignment WHERE game_id = ?)", (game_id,))
+    # Ensure cap_number is included in the available_caps query
+    cursor.execute("""
+        SELECT caps.cap_id, caps.cap_number 
+        FROM caps 
+        WHERE caps.cap_id NOT IN (SELECT cap_id FROM cap_assignment WHERE game_id = ?)
+    """, (game_id,))
     available_caps = cursor.fetchall()
 
     return render_template('cap_assignment.html', game_id=game_id, game_date=game_date,
                            opponent_team=opponent_team, players=players, available_caps=available_caps)
+
 
 @app.route('/game_stats/<int:game_id>', methods=['GET', 'POST'])
 def game_stats(game_id):
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT date, opponent_team FROM games WHERE game_id = ?", (game_id,))
+    cursor.execute("SELECT game_date, opponent_team FROM games WHERE game_id = ?", (game_id,))
     game = cursor.fetchone()
     game_date, opponent_team = game
 
@@ -99,7 +105,7 @@ def game_stats(game_id):
     cursor.execute("SELECT game_state_id, game_state_desc FROM game_state")
     game_states = cursor.fetchall()
 
-    cursor.execute("SELECT action_id, action_desc, result_type FROM actions")
+    cursor.execute("SELECT action_id, action_desc FROM actions")
     actions = cursor.fetchall()
 
     cursor.execute("SELECT result_id, result_desc, result_type FROM results")
@@ -113,10 +119,22 @@ def game_stats(game_id):
         cursor.execute("INSERT INTO game_stats (game_id, game_state_id, cap_number, action_id, result_id) VALUES (?, ?, ?, ?, ?)",
                        (game_id, game_state_id, cap_number, action_id, result_id))
         db.commit()
-        return redirect(url_for('index'))
+        # Instead of redirecting, re-render the game_stats page with updated data
+        cursor.execute("SELECT cap_assignment.cap_id, players.last_name FROM cap_assignment JOIN players ON cap_assignment.player_id = players.player_id WHERE cap_assignment.game_id = ?", (game_id,))
+        players_in_game = cursor.fetchall()
+
+        cursor.execute("SELECT game_state_id, game_state_desc FROM game_state")
+        game_states = cursor.fetchall()
+
+        cursor.execute("SELECT action_id, action_desc FROM actions")
+        actions = cursor.fetchall()
+
+        cursor.execute("SELECT result_id, result_desc, result_type FROM results")
+        results = cursor.fetchall()
 
     return render_template('game_stats.html', game_id=game_id, game_date=game_date, opponent_team=opponent_team,
                            players_in_game=players_in_game, game_states=game_states, actions=actions, results=results)
+
 
 @app.route('/results/<int:action_id>', methods=['GET'])
 def get_results(action_id):

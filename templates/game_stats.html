@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Stats</title>
+</head>
+<body>
+    <h1>Game Stats</h1>
+    <p>Game ID: {{ game_id }}</p>
+    <p>Date: {{ game_date }}</p>
+    <p>Match: Valley United Water Polo Club vs. {{ opponent_team }}</p>
+    <form method="POST">
+        <label for="game_state">Game State:</label>
+        <select id="game_state" name="game_state_id">
+            {% for state in game_states %}
+            <option value="{{ state[0] }}">{{ state[1] }}</option>
+            {% endfor %}
+        </select>
+        <br>
+        <div>
+            <div style="float:left; width:20%;">
+                <h3>Available Players</h3>
+                {% for player in players_in_game %}
+                <button type="button" onclick="selectPlayer('{{ player[0] }}')">{{ player[0] }} - {{ player[1] }}</button>
+                {% endfor %}
+                <br><br>
+                <button type="button" onclick="enterField()">Enter Field</button>
+            </div>
+            <div style="float:left; width:20%;">
+                <h3>Players in Field</h3>
+                <div id="field_players"></div>
+                <br><br>
+                <button type="button" onclick="exitField()">Exit Field</button>
+            </div>
+            <div style="float:left; width:20%;">
+                <h3>Actions</h3>
+                {% for action in actions %}
+                <button type="button" onclick="selectAction('{{ action[0] }}')">{{ action[1] }}</button>
+                {% endfor %}
+            </div>
+            <div style="float:left; width:20%;">
+                <h3>Results</h3>
+                <div id="results_buttons"></div>
+            </div>
+        </div>
+        <br style="clear:both;">
+        <input type="hidden" id="cap_number" name="cap_number">
+        <input type="hidden" id="action_id" name="action_id">
+        <input type="hidden" id="result_id" name="result_id">
+        <button type="submit">Record</button>
+    </form>
+    <br>
+    <button onclick="location.href='{{ url_for('index') }}'">Back to Home</button>
+
+    <script>
+        let selectedPlayer = null;
+        let selectedAction = null;
+        const availablePlayers = document.getElementById('available_players');
+        const fieldPlayers = document.getElementById('field_players');
+        const resultsButtons = document.getElementById('results_buttons');
+        
+        function selectPlayer(capNumber) {
+            selectedPlayer = capNumber;
+            document.getElementById('cap_number').value = capNumber;
+        }
+        
+        function enterField() {
+            if (selectedPlayer) {
+                const button = document.querySelector(`button[onclick="selectPlayer('${selectedPlayer}')"]`);
+                fieldPlayers.appendChild(button);
+                selectedPlayer = null;
+            }
+        }
+        
+        function exitField() {
+            if (selectedPlayer) {
+                const button = document.querySelector(`button[onclick="selectPlayer('${selectedPlayer}')"]`);
+                availablePlayers.appendChild(button);
+                selectedPlayer = null;
+            }
+        }
+        
+        function selectAction(actionId) {
+            selectedAction = actionId;
+            document.getElementById('action_id').value = actionId;
+            resultsButtons.innerHTML = '';
+            fetch(`/results/${actionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(result => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.innerText = result.desc;
+                        button.onclick = () => selectResult(result.id);
+                        resultsButtons.appendChild(button);
+                    });
+                });
+        }
+        
+        function selectResult(resultId) {
+            document.getElementById('result_id').value = resultId;
+        }
+    </script>
+</body>
+</html>

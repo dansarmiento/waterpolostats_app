@@ -2,51 +2,60 @@
 <html>
 <head>
     <title>Game Stats</title>
+    <style>
+        .selected {
+            background-color: #0000FF; /* Blue for selected items */
+        }
+    </style>
 </head>
 <body>
     <h1>Game Stats</h1>
     <p>Game ID: {{ game_id }}</p>
     <p>Date: {{ game_date }}</p>
     <p>Match: Valley United Water Polo Club vs. {{ opponent_team }}</p>
-    <form method="POST">
-        <label for="game_state">Game State:</label>
-        <select id="game_state" name="game_state_id">
-            {% for state in game_states %}
-            <option value="{{ state[0] }}">{{ state[1] }}</option>
-            {% endfor %}
-        </select>
-        <br>
+    <form method="POST" id="game-stats-form">
         <div>
-            <div style="float:left; width:20%;">
-                <h3>Available Players</h3>
+            <h3>Game State</h3>
+            {% for state in game_states %}
+            <label>
+                <input type="radio" name="game_state_id" value="{{ state[0] }}" {% if loop.index == 1 %}checked{% endif %}>
+                {{ state[1] }}
+            </label><br>
+            {% endfor %}
+        </div>
+        <div style="float:left; width:20%;">
+            <h3>Available Players</h3>
+            <div id="available_players">
                 {% for player in players_in_game %}
-                <button type="button" onclick="selectPlayer('{{ player[0] }}')">{{ player[0] }} - {{ player[1] }}</button>
+                <button type="button" onclick="selectPlayer('{{ player[0] }}', this)">{{ player[0] }} - {{ player[1] }}</button>
                 {% endfor %}
-                <br><br>
-                <button type="button" onclick="enterField()">Enter Field</button>
             </div>
-            <div style="float:left; width:20%;">
-                <h3>Players in Field</h3>
-                <div id="field_players"></div>
-                <br><br>
-                <button type="button" onclick="exitField()">Exit Field</button>
-            </div>
-            <div style="float:left; width:20%;">
-                <h3>Actions</h3>
+            <br><br>
+            <button type="button" onclick="enterField()">Enter Field</button>
+        </div>
+        <div style="float:left; width:20%;">
+            <h3>Players in Field</h3>
+            <div id="field_players"></div>
+            <br><br>
+            <button type="button" onclick="exitField()">Exit Field</button>
+        </div>
+        <div style="float:left; width:20%;">
+            <h3>Actions</h3>
+            <div id="actions_buttons">
                 {% for action in actions %}
-                <button type="button" onclick="selectAction('{{ action[0] }}')">{{ action[1] }}</button>
+                <button type="button" onclick="selectAction('{{ action[0] }}', this)">{{ action[1] }}</button>
                 {% endfor %}
             </div>
-            <div style="float:left; width:20%;">
-                <h3>Results</h3>
-                <div id="results_buttons"></div>
-            </div>
+        </div>
+        <div style="float:left; width:20%;">
+            <h3>Results</h3>
+            <div id="results_buttons"></div>
         </div>
         <br style="clear:both;">
         <input type="hidden" id="cap_number" name="cap_number">
         <input type="hidden" id="action_id" name="action_id">
         <input type="hidden" id="result_id" name="result_id">
-        <button type="submit">Record</button>
+        <button type="submit" onclick="clearSelections()">Record</button>
     </form>
     <br>
     <button onclick="location.href='{{ url_for('index') }}'">Back to Home</button>
@@ -54,32 +63,42 @@
     <script>
         let selectedPlayer = null;
         let selectedAction = null;
+        let selectedResult = null;
+
         const availablePlayers = document.getElementById('available_players');
         const fieldPlayers = document.getElementById('field_players');
+        const actionsButtons = document.getElementById('actions_buttons');
         const resultsButtons = document.getElementById('results_buttons');
         
-        function selectPlayer(capNumber) {
+        function selectPlayer(capNumber, button) {
+            clearSelection(availablePlayers);
+            clearSelection(fieldPlayers);
+            button.classList.add('selected');
             selectedPlayer = capNumber;
             document.getElementById('cap_number').value = capNumber;
         }
         
         function enterField() {
             if (selectedPlayer) {
-                const button = document.querySelector(`button[onclick="selectPlayer('${selectedPlayer}')"]`);
+                const button = document.querySelector(`button[onclick="selectPlayer('${selectedPlayer}', this)"]`);
                 fieldPlayers.appendChild(button);
                 selectedPlayer = null;
+                clearSelection(availablePlayers);
             }
         }
         
         function exitField() {
             if (selectedPlayer) {
-                const button = document.querySelector(`button[onclick="selectPlayer('${selectedPlayer}')"]`);
+                const button = document.querySelector(`button[onclick="selectPlayer('${selectedPlayer}', this)"]`);
                 availablePlayers.appendChild(button);
                 selectedPlayer = null;
+                clearSelection(fieldPlayers);
             }
         }
         
-        function selectAction(actionId) {
+        function selectAction(actionId, button) {
+            clearSelection(actionsButtons);
+            button.classList.add('selected');
             selectedAction = actionId;
             document.getElementById('action_id').value = actionId;
             resultsButtons.innerHTML = '';
@@ -87,17 +106,50 @@
                 .then(response => response.json())
                 .then(data => {
                     data.forEach(result => {
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.innerText = result.desc;
-                        button.onclick = () => selectResult(result.id);
-                        resultsButtons.appendChild(button);
+                        const resultButton = document.createElement('button');
+                        resultButton.type = 'button';
+                        resultButton.innerText = result.desc;
+                        resultButton.onclick = () => selectResult(result.id, resultButton);
+                        resultsButtons.appendChild(resultButton);
                     });
                 });
         }
         
-        function selectResult(resultId) {
+        function selectResult(resultId, button) {
+            clearSelection(resultsButtons);
+            button.classList.add('selected');
+            selectedResult = resultId;
             document.getElementById('result_id').value = resultId;
+        }
+
+        function clearSelection(parent) {
+            const buttons = parent.getElementsByTagName('button');
+            for (let button of buttons) {
+                button.classList.remove('selected');
+            }
+        }
+
+        function clearSelections() {
+            clearSelection(availablePlayers);
+            clearSelection(fieldPlayers);
+            clearSelection(actionsButtons);
+            clearSelection(resultsButtons);
+        }
+
+        document.getElementById('game-stats-form').onsubmit = function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                method: this.method,
+                body: formData,
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.body.innerHTML = html;
+                document.querySelector(`[value="${formData.get('game_state_id')}"]`).checked = true;
+            })
+            .catch(error => console.warn('Error:', error));
         }
     </script>
 </body>
