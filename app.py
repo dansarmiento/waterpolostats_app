@@ -111,29 +111,27 @@ def game_stats(game_id):
     cursor.execute("SELECT result_id, result_desc, result_type FROM results")
     results = cursor.fetchall()
 
+    selected_game_state = None
+    field_players = []
+
     if request.method == 'POST':
-        game_state_id = request.form['game_state_id']
-        cap_number = request.form['cap_number']
-        action_id = request.form['action_id']
-        result_id = request.form['result_id']
-        cursor.execute("INSERT INTO game_stats (game_id, game_state_id, cap_number, action_id, result_id) VALUES (?, ?, ?, ?, ?)",
-                       (game_id, game_state_id, cap_number, action_id, result_id))
-        db.commit()
-        # Instead of redirecting, re-render the game_stats page with updated data
-        cursor.execute("SELECT cap_assignment.cap_id, players.last_name FROM cap_assignment JOIN players ON cap_assignment.player_id = players.player_id WHERE cap_assignment.game_id = ?", (game_id,))
-        players_in_game = cursor.fetchall()
+        game_state_id = request.form.get('game_state_id')
+        cap_number = request.form.get('cap_number')
+        action_id = request.form.get('action_id')
+        result_id = request.form.get('result_id')
+        field_players = request.form.getlist('field_players')
 
-        cursor.execute("SELECT game_state_id, game_state_desc FROM game_state")
-        game_states = cursor.fetchall()
+        if game_state_id and cap_number and action_id and result_id:
+            cursor.execute("INSERT INTO game_stats (game_id, game_state_id, cap_number, action_id, result_id) VALUES (?, ?, ?, ?, ?)",
+                           (game_id, game_state_id, cap_number, action_id, result_id))
+            db.commit()
 
-        cursor.execute("SELECT action_id, action_desc FROM actions")
-        actions = cursor.fetchall()
-
-        cursor.execute("SELECT result_id, result_desc, result_type FROM results")
-        results = cursor.fetchall()
+        selected_game_state = game_state_id
 
     return render_template('game_stats.html', game_id=game_id, game_date=game_date, opponent_team=opponent_team,
-                           players_in_game=players_in_game, game_states=game_states, actions=actions, results=results)
+                           players_in_game=players_in_game, game_states=game_states, actions=actions, results=results,
+                           selected_game_state=selected_game_state, field_players=field_players)
+
 
 
 @app.route('/results/<int:action_id>', methods=['GET'])

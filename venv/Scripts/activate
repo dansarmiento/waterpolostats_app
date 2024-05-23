@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\data\PythonSQL\waterpolostats\waterpolostats_app\venv"
+VIRTUAL_ENV="c:\data\PythonSQL\waterpolostats\waterpolostats_app\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Water Polo Stats</title>
+    <title>Home</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Water Polo Stats</h1>
-    <button onclick="location.href='{{ url_for('players') }}'">Players</button>
-    <button onclick="location.href='{{ url_for('games') }}'">Games</button>
+    <div class="container">
+        <h1>Welcome to the Water Polo Stats Application</h1>
+        <p>This is the home page.</p>
+        <button onclick="location.href='{{ url_for('players') }}'">Players</button>
+        <button onclick="location.href='{{ url_for('games') }}'">Games</button>
+    </div>
 </body>
 </html>
