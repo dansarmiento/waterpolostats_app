@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ListView
+        android:id="@+id/gamesListView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <EditText
+        android:id="@+id/gameDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Game Date" />
+
+    <EditText
+        android:id="@+id/opponentTeam"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Opponent Team" />
+
+    <EditText
+        android:id="@+id/opponentTeamLevel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Opponent Team Level" />
+
+    <Button
+        android:id="@+id/addGameButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Game" />
+
+    <Button
+        android:id="@+id/assignCapsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Assign Caps"
+        android:enabled="false" />
+</LinearLayout>
